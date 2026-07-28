@@ -1,152 +1,69 @@
-import speech_recognition as sr
+import sys
+import random
+import importlib
+from typing import TYPE_CHECKING
 
-try:
-    import pyttsx3
-except ImportError:
+# Allow linters/type-checkers to see the pyttsx3 import during type checking
+if TYPE_CHECKING:  # pragma: no cover - only for static analysis
+    import pyttsx3  # type: ignore
+
+# Cross-platform TTS setup
+# Import pyttsx3 dynamically at runtime so IDEs that can't resolve the
+# package won't raise errors and environments without the package fall back.
+if sys.platform == 'win32':
+    try:
+        pyttsx3 = importlib.import_module('pyttsx3')
+        engine = pyttsx3.init()
+        TTS_AVAILABLE = True
+    except Exception:
+        # pyttsx3 may not be installed in the environment; fall back gracefully
+        pyttsx3 = None
+        engine = None
+        TTS_AVAILABLE = False
+        print("TTS not available: pyttsx3 import/init failed")
+else:
     pyttsx3 = None
+    engine = None
+    TTS_AVAILABLE = False
+    print("TTS not available on this platform (Linux/Render)")
 
+# List of funny/clever responses (for when TTS is not available)
+RESPONSES = [
+    "Smart Home AI is ready!",
+    "Welcome back!",
+    "All systems are operational.",
+    "How can I assist you today?",
+    "Smart Home AI activated!",
+    "Ready to serve."
+]
 
-class VoiceAssistant:
-
-    def __init__(self):
-
-        self.recognizer = sr.Recognizer()
-
-        self.recognizer.energy_threshold = 300
-        self.recognizer.dynamic_energy_threshold = True
-        self.recognizer.pause_threshold = 0.8
-
-        print("\nAvailable microphones:\n")
-
-        microphones = sr.Microphone.list_microphone_names()
-
-        for i, mic in enumerate(microphones):
-            print(i, mic)
-
-        # Try to use External Mic first
-        index = None
-
-        for i, mic in enumerate(microphones):
-
-            if "External Mic" in mic:
-                index = i
-                break
-
-        if index is None:
-
-            for i, mic in enumerate(microphones):
-
-                if "Microphone Array" in mic:
-                    index = i
-                    break
-
+def speak(text):
+    """
+    Cross-platform text-to-speech function.
+    Works on Windows with pyttsx3, falls back to print on Linux/Render.
+    """
+    if TTS_AVAILABLE and pyttsx3:
         try:
-
-            self.microphone = sr.Microphone(device_index=index)
-
-            print("\nUsing microphone:")
-            print(microphones[index])
-
+            engine.say(text)
+            engine.runAndWait()
         except Exception as e:
+            print(f"TTS Error: {e}")
+            print(f"TTS (fallback): {text}")
+    else:
+        # Linux/Render fallback - just print
+        print(f"TTS: {text}")
 
-            print(e)
+def random_response():
+    """Returns a random response for when TTS is not available"""
+    return random.choice(RESPONSES)
 
-            self.microphone = None
+def speak_random():
+    """Speaks a random response"""
+    response = random_response()
+    speak(response)
+    return response
 
-        if pyttsx3:
-
-            self.engine = None
-
-            
-
-        else:
-
-            self.engine = None
-
-        self.adjust_noise()
-
-    def adjust_noise(self):
-
-        if self.microphone is None:
-            return
-
-        try:
-
-            with self.microphone as source:
-
-                print("Adjusting microphone...")
-
-                self.recognizer.adjust_for_ambient_noise(source, duration=2)
-
-                print("Ready!")
-
-        except Exception as e:
-
-            print(e)
-
-    def speech_to_text(self):
-
-        if self.microphone is None:
-            return ""
-
-        try:
-
-            with self.microphone as source:
-
-                print("\nSpeak now...")
-
-                audio = self.recognizer.listen(
-                    source,
-                    timeout=15,
-                    phrase_time_limit=8
-                )
-
-            print("Recognizing...")
-
-            text = self.recognizer.recognize_google(audio)
-
-            print("You said:", text)
-
-            return text
-
-        except sr.WaitTimeoutError:
-
-            print("No speech detected.")
-
-            return ""
-
-        except sr.UnknownValueError:
-
-            print("Could not understand.")
-
-            return ""
-
-        except Exception as e:
-
-            print(e)
-
-            return ""
-
-    def text_to_speech(self, text):
-        print("Assistant:", text)
-
-        try:
-            import win32com.client
-
-            speaker = win32com.client.Dispatch(
-                "SAPI.SpVoice"
-            )
-
-            speaker.Rate = 0
-            speaker.Volume = 100
-
-            speaker.Speak(text)
-
-        except Exception as e:
-            print("Speech Error:", e)
-
-    def get_voice_input(self, prompt="I'm listening..."):
-
-        print(prompt)
-
-        return self.speech_to_text()
+# Test if running directly
+if __name__ == "__main__":
+    speak("Testing cross-platform TTS")
+    speak_random()
