@@ -243,11 +243,11 @@ def forgot_password():
 
 @app.route("/devices")
 def devices():
-    if "user" not in session:
-        return redirect("/login")
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
     return render_template("devices.html")
-
 
 @app.route("/automation")
 def automation_page():
