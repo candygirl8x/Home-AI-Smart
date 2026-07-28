@@ -230,16 +230,15 @@ def logout():
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
 
-    if flask.request.method == "POST":
+    if request.method == "POST":
 
-        email = flask.request.form["email"]
+        email = request.form["email"]
 
-        # Add your password reset logic here later
+        session["reset_email"] = email
 
-        flash("Password reset link sent (demo).")
-        return redirect(url_for("login"))
+        return redirect(url_for("reset_password"))
 
-    return flask.render_template("forgot_password.html")
+    return render_template("forgot_password.html")
 
 @app.route("/devices")
 def devices():
@@ -324,6 +323,31 @@ def assistant():
 def security():
     return flask.render_template("security.html")
 
+
+@app.route("/reset_password", methods=["GET", "POST"])
+def reset_password():
+
+    if "reset_email" not in session:
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+
+        password = request.form["password"]
+
+        success = db.update_password(
+            session["reset_email"],
+            password
+        )
+
+        session.pop("reset_email", None)
+
+        if success:
+            flash("Password updated successfully.")
+            return redirect(url_for("login"))
+
+        flash("Email not found.")
+
+    return render_template("reset_password.html")
 
 if __name__ == "__main__":
     print("Starting Flask Server...")
