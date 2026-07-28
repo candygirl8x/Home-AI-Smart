@@ -1,7 +1,6 @@
 # pyright: reportMissingImports=false
-import flask
 from abc import ABC, abstractmethod
-from flask import (  # type: ignore[import-not-found]
+from flask import ( 
     Flask,
     render_template,
     request,
@@ -10,6 +9,7 @@ from flask import (  # type: ignore[import-not-found]
     session,
     flash
 )
+import flask
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -169,20 +169,33 @@ def get_energy_usage():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
-        # login code
-        ...
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = db.login_user(email, password)
+
+        if user:
+            session["user_id"] = user[0]
+            session["username"] = user[1]
+
+            flash("Login successful!")
+            return redirect(url_for("dashboard"))
+
+        flash("Invalid email or password.")
+
     return render_template("login.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
-    if flask.request.method == "POST":
+    if request.method == "POST":
 
-        username = flask.request.form["username"]
-        email = flask.request.form["email"]
-        password = flask.request.form["password"]
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
 
         success = db.register_user(username, email, password)
 
@@ -192,7 +205,7 @@ def register():
 
         flash("Username or Email already exists.")
 
-    return flask.render_template("register.html")
+    return render_template("register.html")
 
 
 @app.route("/dashboard")
@@ -201,7 +214,7 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    return flask.render_template(
+    return render_template(
         "dashboard.html",
         username=session["username"]
     )
