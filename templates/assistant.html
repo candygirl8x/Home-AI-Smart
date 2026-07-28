@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>AI Assistant</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #eef2f7;
+            padding: 40px;
+        }
+
+        .container {
+            width: 700px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px gray;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .response {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f4f4f4;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 25px;
+            text-decoration: none;
+            background: black;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🤖 AI Assistant</h1>
+
+        <form method="POST">
+
+            <input type="text" name="command" placeholder="Example: light on">
+
+            <button>
+
+                Ask AI
+
+            </button>
+
+        </form>
+
+        {% if response %}
+
+        <div class="response">
+
+            <strong>AI Response:</strong>
+
+            <br><br>
+
+            {{ response }}
+
+        </div>
+
+        {% endif %}
+
+        <a href="/">Back to Home</a>
+
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Smart Security</title>
+
+    <style>
+        body {
+
+            font-family: Arial;
+            background: #fff7f7;
+            padding: 40px;
+
+        }
+
+        .container {
+
+            width: 700px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px gray;
+
+        }
+
+        .card {
+
+            background: #f4f4f4;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+
+        }
+
+        button {
+
+            padding: 12px 25px;
+            background: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+
+        }
+
+        a {
+
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            background: black;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 5px;
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🔒 Smart Security</h1>
+
+        <div class="card">
+
+            <h3>Door Lock</h3>
+
+            <button onclick="toggle(this)">
+
+                Locked
+
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <h3>Motion Sensor</h3>
+
+            <button onclick="toggle(this)">
+
+                Active
+
+            </button>
+
+        </div>
+
+        <div class="card">
+
+            <h3>Alarm</h3>
+
+            <button onclick="toggle(this)">
+
+                ON
+
+            </button>
+
+        </div>
+
+        <a href="/">Back to Home</a>
+
+    </div>
+
+    <script>
+
+        function toggle(btn) {
+
+            if (btn.innerHTML == "ON") {
+
+                btn.innerHTML = "OFF";
+
+            }
+
+            else if (btn.innerHTML == "Locked") {
+
+                btn.innerHTML = "Unlocked";
+
+            }
+
+            else if (btn.innerHTML == "Unlocked") {
+
+                btn.innerHTML = "Locked";
+
+            }
+
+            else if (btn.innerHTML == "Active") {
+
+                btn.innerHTML = "Inactive";
+
+            }
+
+            else {
+
+                btn.innerHTML = "ON";
+
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>

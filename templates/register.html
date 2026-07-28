@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Create Account - Smart Home AI</title>
+
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+
+        .box {
+
+            background: white;
+            padding: 30px;
+            width: 350px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px gray;
+
+        }
+
+
+        h1 {
+            text-align: center;
+        }
+
+
+        input {
+
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+
+        }
+
+
+        button {
+
+            width: 100%;
+            padding: 10px;
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+
+        }
+
+
+        .link {
+
+            text-align: center;
+            margin-top: 15px;
+
+        }
+    </style>
+
+
+</head>
+
+
+<body>
+
+
+    <div class="box">
+
+
+        <h1>Create Account</h1>
+
+
+        <form method="POST">
+
+
+            <input type="text" name="username" placeholder="Enter Username" required>
+
+
+
+            <input type="email" name="email" placeholder="Enter Email" required>
+
+
+
+            <input type="password" name="password" placeholder="Create Password" required>
+
+
+
+            <button type="submit">
+                Register
+            </button>
+
+
+
+        </form>
+
+
+
+        <div class="link">
+
+            <p>
+                Already have an account?
+                <a href="{{ url_for('login') }}">
+                    Login
+                </a>
+            </p>
+
+
+        </div>
+
+
+
+    </div>
+
+
+</body>
+
+
+</html>

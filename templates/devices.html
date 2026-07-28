@@ -1,0 +1,104 @@
+TEST DEVICES PAGE
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devices</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .card {
+            background: white;
+            width: 250px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+            text-align: center;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        .back {
+            display: block;
+            width: 120px;
+            margin: 40px auto;
+            text-align: center;
+            text-decoration: none;
+            background: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Smart Devices</h1>
+
+    <div class="container">
+
+        <div class="card">
+            <h2>Living Room Light</h2>
+            <p>Status: <span id="light">OFF</span></p>
+            <button onclick="toggle('light')">Toggle</button>
+        </div>
+
+        <div class="card">
+            <h2>Fan</h2>
+            <p>Status: <span id="fan">OFF</span></p>
+            <button onclick="toggle('fan')">Toggle</button>
+        </div>
+
+        <div class="card">
+            <h2>Air Conditioner</h2>
+            <p>Status: <span id="ac">OFF</span></p>
+            <button onclick="toggle('ac')">Toggle</button>
+        </div>
+
+    </div>
+
+    <a href="/dashboard" class="back">Back</a>
+
+    <script>
+        function toggle(id) {
+
+            let device = document.getElementById(id);
+
+            if (device.innerHTML == "OFF") {
+                device.innerHTML = "ON";
+            }
+            else {
+                device.innerHTML = "OFF";
+            }
+
+        }
+    </script>
+
+</body>
+
+</html>

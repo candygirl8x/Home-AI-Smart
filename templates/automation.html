@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <title>Automation</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #eef2f7;
+            padding: 40px;
+        }
+
+        .container {
+            width: 500px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px gray;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        ul {
+            margin-top: 20px;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            background: black;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>Create Automation Rule</h2>
+
+        <input type="text" id="rule" placeholder="Example: Turn ON light at 6 PM">
+
+        <button onclick="addRule()">Add Rule</button>
+
+        <ul id="rules"></ul>
+
+        <a href="/dashboard">Back</a>
+
+    </div>
+
+    <script>
+
+        function addRule() {
+
+            let rule = document.getElementById("rule").value;
+
+            if (rule == "") {
+                alert("Enter a rule");
+                return;
+            }
+
+            let li = document.createElement("li");
+
+            li.innerHTML = rule;
+
+            document.getElementById("rules").appendChild(li);
+
+            document.getElementById("rule").value = "";
+
+        }
+
+    </script>
+
+</body>
+
+</html>
