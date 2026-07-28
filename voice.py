@@ -1,33 +1,26 @@
 import sys
 import random
 import importlib
-from typing import TYPE_CHECKING
 
-# Allow linters/type-checkers to see the pyttsx3 import during type checking
-if TYPE_CHECKING:  # pragma: no cover - only for static analysis
-    import pyttsx3  # type: ignore
-
-# Cross-platform TTS setup
-# Import pyttsx3 dynamically at runtime so IDEs that can't resolve the
-# package won't raise errors and environments without the package fall back.
+# Cross-platform TTS setup - only import on Windows
 if sys.platform == 'win32':
     try:
         pyttsx3 = importlib.import_module('pyttsx3')
         engine = pyttsx3.init()
         TTS_AVAILABLE = True
-    except Exception:
-        # pyttsx3 may not be installed in the environment; fall back gracefully
+    except (ImportError, ModuleNotFoundError):
         pyttsx3 = None
         engine = None
         TTS_AVAILABLE = False
-        print("TTS not available: pyttsx3 import/init failed")
+        print("pyttsx3 not installed; TTS disabled.")
 else:
+    # On Linux/Render, don't even try to import pyttsx3
     pyttsx3 = None
     engine = None
     TTS_AVAILABLE = False
     print("TTS not available on this platform (Linux/Render)")
 
-# List of funny/clever responses (for when TTS is not available)
+# List of funny/clever responses
 RESPONSES = [
     "Smart Home AI is ready!",
     "Welcome back!",
