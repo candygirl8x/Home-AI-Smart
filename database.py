@@ -1,7 +1,45 @@
 import sqlite3
 import os
 import uuid
-from werkzeug.security import generate_password_hash, check_password_hash
+
+try:
+    from werkzeug.security import generate_password_hash, check_password_hash  # type: ignore
+except ImportError:
+    import base64
+    import hashlib
+    import secrets
+
+    def generate_password_hash(password, method="pbkdf2:sha256", salt_length=16):
+        if method.startswith("pbkdf2:"):
+            method_parts = method.split(":")
+            hash_name = method_parts[1] if len(method_parts) > 1 else "sha256"
+            iterations = int(method_parts[2]) if len(method_parts) > 2 else 260000
+            salt = secrets.token_bytes(salt_length)
+            salt_b64 = base64.b64encode(salt).decode("utf-8")
+            derived = hashlib.pbkdf2_hmac(hash_name, password.encode("utf-8"), salt, iterations)
+            hash_b64 = base64.b64encode(derived).decode("utf-8")
+            return f"pbkdf2:{hash_name}:{iterations}${salt_b64}${hash_b64}"
+        raise NotImplementedError(f"Unsupported password hashing method: {method}")
+
+    def check_password_hash(password_hash, password):
+        if not password_hash or "$" not in password_hash:
+            return False
+
+        prefix, _, remainder = password_hash.partition("$")
+        if not prefix.startswith("pbkdf2:"):
+            return False
+
+        parts = remainder.split("$")
+        if len(parts) != 2:
+            return False
+
+        salt_b64, hash_b64 = parts
+        method_parts = prefix.split(":")
+        hash_name = method_parts[1] if len(method_parts) > 1 else "sha256"
+        iterations = int(method_parts[2]) if len(method_parts) > 2 else 260000
+        salt = base64.b64decode(salt_b64.encode("utf-8"))
+        expected = hashlib.pbkdf2_hmac(hash_name, password.encode("utf-8"), salt, iterations)
+        return base64.b64decode(hash_b64.encode("utf-8")) == expected
 
 
 class Database:
@@ -17,7 +55,10 @@ class Database:
         self.init_db()
 
     def connect(self):
-        return sqlite3.connect(self.db_path)
+     conn = sqlite3.connect(self.db_path)
+     conn.row_factory = sqlite3.Row
+     conn.execute("PRAGMA foreign_keys = ON")
+     return conn
 
     def init_db(self):
 
@@ -116,9 +157,12 @@ class Database:
 
             return True
 
+        except sqlite3.IntegrityError:
+         return "Email or username already exists."
+
         except Exception as e:
-            print("Registration Error:", e)
-            return False
+         print(e)
+         return str(e)
 
         finally:
             conn.close()
