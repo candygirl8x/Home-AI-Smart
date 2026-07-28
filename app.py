@@ -167,21 +167,12 @@ def get_energy_usage():
     return flask.jsonify({'status': 'success', 'stats': stats})
 
 
-@app.route('/login', methods=['POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-
-    email = request.form['email']
-    password = request.form['password']
-
-    user = db.get_user_by_email(email)
-
-    if user:
-        if check_password_hash(user[2], password):
-            return redirect('/dashboard')
-        else:
-            return "Wrong password"
-    else:
-        return "User not found"
+    if request.method == "POST":
+        # login code
+        ...
+    return render_template("login.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
