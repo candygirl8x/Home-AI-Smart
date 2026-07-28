@@ -1,5 +1,6 @@
 # pyright: reportMissingImports=false
 import flask
+from abc import ABC, abstractmethod
 from flask import (  # type: ignore[import-not-found]
     Flask,
     render_template,
@@ -267,7 +268,7 @@ def voice():
 
     response = ""
 
-   if request.method == "POST":
+    if request.method == "POST":
 
         print("Start Listening button clicked")
 
