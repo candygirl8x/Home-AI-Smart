@@ -55,13 +55,12 @@ class Database:
         self.init_db()
 
     def connect(self):
-     conn = sqlite3.connect(self.db_path)
-     conn.row_factory = sqlite3.Row
-     conn.execute("PRAGMA foreign_keys = ON")
-     return conn
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
 
     def init_db(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -154,21 +153,19 @@ class Database:
 
             conn.commit()
             print("User saved successfully")
-
             return True
 
         except sqlite3.IntegrityError:
-         return "Email or username already exists."
+            return "Email or username already exists."
 
         except Exception as e:
-         print(e)
-         return str(e)
+            print(e)
+            return str(e)
 
         finally:
             conn.close()
 
     def login_user(self, email, password):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -178,9 +175,7 @@ class Database:
         )
 
         user = cursor.fetchone()
-
         conn.close()
-
 
         if user and check_password_hash(user[3], password):
             return user
@@ -188,7 +183,6 @@ class Database:
         return None
 
     def get_user(self, user_id):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -198,17 +192,32 @@ class Database:
         )
 
         user = cursor.fetchone()
-
         conn.close()
 
         return user
+
+    def update_password(self, email, new_password):
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        hashed_password = generate_password_hash(new_password)
+
+        cursor.execute(
+            "UPDATE users SET password=? WHERE email=?",
+            (hashed_password, email)
+        )
+
+        conn.commit()
+        success = cursor.rowcount > 0
+        conn.close()
+
+        return success
 
     # ===================================================
     # DEVICE METHODS
     # ===================================================
 
     def add_device(self, name, device_type, room, status="OFF"):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -235,20 +244,17 @@ class Database:
         return device_id
 
     def get_all_devices(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM devices")
 
         rows = cursor.fetchall()
-
         conn.close()
 
         devices = []
 
         for row in rows:
-
             devices.append({
                 "id": row[0],
                 "name": row[1],
@@ -263,7 +269,6 @@ class Database:
         return self.get_all_devices()
 
     def get_device(self, device_id):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -273,7 +278,6 @@ class Database:
         )
 
         row = cursor.fetchone()
-
         conn.close()
 
         if row:
@@ -288,7 +292,6 @@ class Database:
         return None
 
     def update_device_status(self, device_id, status):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -306,7 +309,6 @@ class Database:
         return self.update_device_status(device_id, status)
 
     def delete_device(self, device_id):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -319,14 +321,12 @@ class Database:
         conn.close()
 
     def total_devices(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
         cursor.execute("SELECT COUNT(*) FROM devices")
 
         total = cursor.fetchone()[0]
-
         conn.close()
 
         return total
@@ -336,7 +336,6 @@ class Database:
     # ===================================================
 
     def add_room(self, name):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -353,14 +352,12 @@ class Database:
         return room_id
 
     def get_all_rooms(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM rooms")
 
         rows = cursor.fetchall()
-
         conn.close()
 
         rooms = []
@@ -374,7 +371,6 @@ class Database:
         return rooms
 
     def delete_room(self, room_id):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -391,7 +387,6 @@ class Database:
     # ===================================================
 
     def add_rule(self, name, condition, action, enabled=True):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -418,14 +413,12 @@ class Database:
         return rule_id
 
     def get_all_rules(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM automation_rules")
 
         rows = cursor.fetchall()
-
         conn.close()
 
         rules = []
@@ -442,7 +435,6 @@ class Database:
         return rules
 
     def delete_rule(self, rule_id):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -454,12 +446,11 @@ class Database:
         conn.commit()
         conn.close()
 
-            # ===================================================
+    # ===================================================
     # SCHEDULE METHODS
     # ===================================================
 
     def add_schedule(self, device_id, action, schedule_time):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -485,14 +476,12 @@ class Database:
         return schedule_id
 
     def get_all_schedules(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM schedules")
 
         rows = cursor.fetchall()
-
         conn.close()
 
         schedules = []
@@ -508,7 +497,6 @@ class Database:
         return schedules
 
     def delete_schedule(self, schedule_id):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -525,7 +513,6 @@ class Database:
     # ===================================================
 
     def add_energy_log(self, device_id, energy_usage):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -541,7 +528,6 @@ class Database:
         conn.close()
 
     def get_energy_stats(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -556,7 +542,6 @@ class Database:
         )
 
         total_devices = cursor.fetchone()[0]
-
         conn.close()
 
         return {
@@ -569,7 +554,6 @@ class Database:
     # ===================================================
 
     def clear_devices(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -579,7 +563,6 @@ class Database:
         conn.close()
 
     def clear_rooms(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -589,7 +572,6 @@ class Database:
         conn.close()
 
     def clear_rules(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -599,7 +581,6 @@ class Database:
         conn.close()
 
     def clear_schedules(self):
-
         conn = self.connect()
         cursor = conn.cursor()
 
