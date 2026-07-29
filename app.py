@@ -167,26 +167,32 @@ def get_energy_usage():
     return flask.jsonify({'status': 'success', 'stats': stats})
 
 
+from werkzeug.security import check_password_hash
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
+
         email = request.form["email"]
         password = request.form["password"]
 
-        user = db.login_user(email, password)
+        user = db.get_user_by_email(email)
 
-        if user:
+        if not user:
+            flash("Email not registered.", "danger")
+
+        elif not check_password_hash(user[3], password):
+            flash("Wrong password.", "danger")
+
+        else:
             session["user_id"] = user[0]
             session["username"] = user[1]
 
-            flash("Login successful!")
+            flash("Login successful!", "success")
             return redirect(url_for("dashboard"))
 
-        flash("Invalid email or password.")
-
     return render_template("login.html")
-
 
 @app.route("/register", methods=["GET", "POST"])
 def register():

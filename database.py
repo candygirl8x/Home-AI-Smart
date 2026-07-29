@@ -182,6 +182,20 @@ class Database:
 
         return None
 
+    def get_user_by_email(self, email):
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT * FROM users WHERE email=?",
+            (email,)
+        )
+
+        user = cursor.fetchone()
+        conn.close()
+
+        return user
+
     def get_user(self, user_id):
         conn = self.connect()
         cursor = conn.cursor()
