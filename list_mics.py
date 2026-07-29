@@ -1,4 +1,10 @@
-import speech_recognition as sr
+# pyright: reportMissingImports=false
+try:
+    import speech_recognition as sr
+except ImportError as e:
+    print("Error: speech_recognition module not found.")
+    print("Install it using: pip install SpeechRecognition")
+    exit(1)
 
 print("Available microphones:\n")
 
