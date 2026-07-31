@@ -1,5 +1,6 @@
 # pyright: reportMissingImports=false
 from abc import ABC, abstractmethod
+from unittest import result
 from flask import ( 
     Flask,
     render_template,
@@ -15,6 +16,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import traceback
 import json
+from dotenv import load_dotenv
 import os
 
 import automation as automation_module
@@ -29,6 +31,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 
+load_dotenv()
+
 
 app = Flask(__name__)
 print("Template folder:", app.template_folder)
@@ -39,8 +43,11 @@ app.secret_key = "your-secret-key-here"
 # Gmail Configuration
 # ===========================
 
-EMAIL_ADDRESS = "singh123sneha45@gmail.com"
-EMAIL_PASSWORD = "xqne vgnh dpwx bhhp" # Use App Password if 2FA is enabled
+EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS", "singh123sneha45@gmail.com")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "vqiq hmxy cqbr exwc") # Use App Password if 2FA is enabled
+
+print("EMAIL:", EMAIL_ADDRESS)
+print("PASSWORD:", EMAIL_PASSWORD)
 
 import traceback
 
@@ -52,13 +59,22 @@ def handle_exception(e):
     <pre>{traceback.format_exc()}</pre>
     """, 500
 
+@app.errorhandler(404)
+def page_not_found(e):
+    print("404 URL:", request.url)
+    return f"""
+    <h2>404 Not Found</h2>
+    <p>{request.url}</p>
+    """, 404
+
 db = Database()
 voice_assistant = VoiceAssistant()
 ai_assistant = AIAssistant()
 automation_manager = AutomationManager()
 
 def send_otp(email, otp):
-
+    print("OTP should be sent to:", email)
+ 
     subject = "Smart Home AI - Password Reset OTP"
 
     body = f"""
@@ -200,14 +216,24 @@ Thank you,<br>
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
-        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
 
-        server.sendmail(
+        print("EMAIL:", EMAIL_ADDRESS)
+        print("PASSWORD:", EMAIL_PASSWORD)
+
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        print("Gmail Login Successful")
+
+        print("FROM:", EMAIL_ADDRESS)
+        print("TO:", email)
+        print("HEADER TO:", message["To"])
+
+        result = server.sendmail(
             EMAIL_ADDRESS,
             email,
             message.as_string()
         )
-        print("OTP EMAIL SENT TO:", email)
+        print("Sendmail Result:", result)
+       
         server.quit()
 
         return True
@@ -340,6 +366,39 @@ def get_energy_usage():
 
 from werkzeug.security import check_password_hash
 
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+
+    print("FORGOT PASSWORD ROUTE OPENED")
+
+    if request.method == "POST":
+
+        email = request.form["email"]
+
+        print("OTP sending to:", email)
+
+        user = db.get_user_by_email(email)
+
+        if not user:
+            flash("Email not registered.", "danger")
+            return redirect(url_for("forgot_password"))
+
+        otp = str(random.randint(100000, 999999))
+
+        session["reset_email"] = email
+        session["reset_otp"] = otp
+        session["otp_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        session["otp_attempts"] = 0
+
+        if send_otp(email, otp):
+            flash("Verification code sent to your email.", "success")
+            return redirect(url_for("verify_otp"))
+        else:
+            flash("Unable to send verification email.", "danger")
+            return redirect(url_for("forgot_password"))
+
+    return render_template("forgot_password.html")
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -405,57 +464,6 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/forgot_password", methods=["GET", "POST"])
-def forgot_password():
-    print("FORGOT PASSWORD ROUTE OPENED")
-    if request.method == "POST":
-        print("POST REQUEST RECEIVED")
-
-        email = request.form["email"]
-
-        print("OTP sending to:", email)
-
-        # Check whether email exists
-        user = db.get_user_by_email(email)
-
-        if not user:
-            flash("Email not registered.", "danger")
-            return redirect(url_for("forgot_password"))
-
-        # Generate OTP
-        otp = str(random.randint(100000, 999999))
-
-        # Save OTP in session
-        session["reset_email"] = email
-        session["reset_otp"] = otp
-        session["otp_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        session["otp_attempts"] = 0
-
-        # Send OTP
-        if send_otp(email, otp):
-
-            print("OTP SENT SUCCESSFULLY TO:", email)
-
-            flash(
-                "Verification code sent to your email.",
-                "success"
-            )
-
-            return redirect(url_for("verify_otp"))
-
-        else:
-
-            print("OTP SEND FAILED")
-
-            flash(
-                "Unable to send verification email.",
-                "danger"
-            )
-
-            return redirect(url_for("forgot_password"))
-
-
-    return render_template("forgot_password.html")
 
 @app.route("/verify_otp", methods=["GET","POST"])
 def verify_otp():
@@ -637,4 +645,4 @@ def resend_otp():
 if __name__ == "__main__":
     print("Starting Flask Server...")
     automation_manager.start_scheduler()
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=False)

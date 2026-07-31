@@ -1,14 +1,10 @@
-import importlib
+import threading
+import pyttsx3
 
 try:
-    sr = importlib.import_module("speech_recognition")
+    import speech_recognition as sr
 except ImportError:
     sr = None
-
-try:
-    pyttsx3 = importlib.import_module("pyttsx3")
-except ImportError:
-    pyttsx3 = None
 
 
 class VoiceAssistant:
@@ -16,10 +12,11 @@ class VoiceAssistant:
     def __init__(self):
 
         if sr is None:
-            raise ImportError("speech_recognition module is required. Install via pip install SpeechRecognition")
+            raise ImportError(
+                "Install SpeechRecognition:\n\npip install SpeechRecognition"
+            )
 
         self.recognizer = sr.Recognizer()
-
         self.recognizer.energy_threshold = 300
         self.recognizer.dynamic_energy_threshold = True
         self.recognizer.pause_threshold = 0.8
@@ -31,47 +28,33 @@ class VoiceAssistant:
         for i, mic in enumerate(microphones):
             print(i, mic)
 
-        # Try to use External Mic first
         index = None
 
         for i, mic in enumerate(microphones):
-
             if "External Mic" in mic:
                 index = i
                 break
 
         if index is None:
-
             for i, mic in enumerate(microphones):
-
                 if "Microphone Array" in mic:
                     index = i
                     break
 
         try:
-
             self.microphone = sr.Microphone(device_index=index)
 
-            print("\nUsing microphone:")
-            print(microphones[index])
+            if index is not None:
+                print("\nUsing microphone:", microphones[index])
+            else:
+                print("\nUsing default microphone")
 
         except Exception as e:
-
-            print(e)
-
+            print("Microphone Error:", e)
             self.microphone = None
 
-        if pyttsx3:
-
-            self.engine = pyttsx3.init()
-
-            self.engine.setProperty("rate", 160)
-
-        else:
-
-            self.engine = None
-
-        self.adjust_noise()
+        # Lock prevents multiple speech calls at once
+        self.tts_lock = threading.Lock()
 
     def adjust_noise(self):
 
@@ -79,18 +62,19 @@ class VoiceAssistant:
             return
 
         try:
-
             with self.microphone as source:
 
                 print("Adjusting microphone...")
 
-                self.recognizer.adjust_for_ambient_noise(source, duration=2)
+                self.recognizer.adjust_for_ambient_noise(
+                    source,
+                    duration=1
+                )
 
                 print("Ready!")
 
         except Exception as e:
-
-            print(e)
+            print("Noise Adjustment Error:", e)
 
     def speech_to_text(self):
 
@@ -98,14 +82,13 @@ class VoiceAssistant:
             return ""
 
         try:
-
             with self.microphone as source:
 
-                print("\nSpeak now...")
+                print("\nListening...")
 
                 audio = self.recognizer.listen(
                     source,
-                    timeout=15,
+                    timeout=10,
                     phrase_time_limit=8
                 )
 
@@ -115,38 +98,38 @@ class VoiceAssistant:
 
             print("You said:", text)
 
-            return text
+            return text.lower()
 
         except sr.WaitTimeoutError:
-
             print("No speech detected.")
-
             return ""
 
         except sr.UnknownValueError:
-
             print("Could not understand.")
-
             return ""
 
         except Exception as e:
-
-            print(e)
-
+            print("Speech Error:", e)
             return ""
 
     def text_to_speech(self, text):
 
-        print("Assistant:", text)
+        print("Speaking:", text)
 
-        if self.engine:
+        with self.tts_lock:
+            try:
+                engine = pyttsx3.init()
+                engine.setProperty("rate", 160)
 
-            self.engine.say(text)
+                engine.say(text)
+                engine.runAndWait()
+                engine.stop()
 
-            self.engine.runAndWait()
+            except Exception as e:
+                print("TTS Error:", e)
 
-    def get_voice_input(self, prompt="I'm listening..."):
+    def get_voice_input(self):
 
-        print(prompt)
+        self.adjust_noise()
 
         return self.speech_to_text()

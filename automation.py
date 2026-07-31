@@ -1,19 +1,17 @@
-from voice import VoiceAssistant
-
-print("Loaded automation.py")
-
 import threading
 import time
+
+print("Loaded automation.py")
 
 
 class AutomationManager:
 
     def __init__(self):
-
         print("Automation Manager Started")
 
-        self.voice = VoiceAssistant()
-
+    # =========================
+    # Execute Actions
+    # =========================
 
     def execute_action(self, action):
 
@@ -22,150 +20,80 @@ class AutomationManager:
 
         print("Executing Action:", action)
 
+        if isinstance(action, dict):
 
-        if action == "LIGHT_ON":
+            device = action.get("device")
+            status = action.get("status")
 
-            self.light_on()
+            if device == "Light":
+                if status == "ON":
+                    self.light_on()
+                elif status == "OFF":
+                    self.light_off()
 
+            elif device == "Fan":
+                if status == "ON":
+                    self.fan_on()
+                elif status == "OFF":
+                    self.fan_off()
 
-        elif action == "LIGHT_OFF":
+            elif device == "Door":
+                if status == "OPEN":
+                    self.open_door()
+                elif status == "CLOSED":
+                    self.close_door()
 
-            self.light_off()
-
-
-        elif action == "DOOR_OPEN":
-
-            self.open_door()
-
-
-        elif action == "DOOR_CLOSE":
-
-            self.close_door()
-
-
-        elif action == "FAN_ON":
-
-            self.fan_on()
-
-
-        elif action == "FAN_OFF":
-
-            self.fan_off()
-
+            else:
+                print("Unknown Device")
 
         else:
-
-            print("Unknown Action")
-
-
+            print("Invalid Action Format")
 
     # =========================
     # Device Actions
     # =========================
 
-
     def light_on(self):
-
         print("💡 Light turned ON")
 
-        self.voice.text_to_speech(
-            "Light turned on"
-        )
-
-
-
     def light_off(self):
-
         print("💡 Light turned OFF")
 
-        self.voice.text_to_speech(
-            "Light turned off"
-        )
-
-
-
-    def open_door(self):
-
-        print("🚪 Door open")
-
-        self.voice.text_to_speech(
-            "Door opened"
-        )
-
-
-
-    def close_door(self):
-
-        print("🚪 Door close")
-
-        self.voice.text_to_speech(
-            "Door closed"
-        )
-
-
-
     def fan_on(self):
-
         print("🌀 Fan turned ON")
 
-        self.voice.text_to_speech(
-            "Fan turned on"
-        )
-
-
-
     def fan_off(self):
-
         print("🌀 Fan turned OFF")
 
-        self.voice.text_to_speech(
-            "Fan turned off"
-        )
+    def open_door(self):
+        print("🚪 Door Opened")
 
-
+    def close_door(self):
+        print("🚪 Door Closed")
 
     # =========================
     # Automation Rules
     # =========================
 
-
     def check_rules(self):
-
         print("Checking Automation Rules")
 
-
-
     def reload_rules(self):
-
         print("Reloading Rules")
-
-
 
     # =========================
     # Background Scheduler
     # =========================
 
-
     def scheduler(self):
-
         while True:
-
             print("Scheduler Running...")
-
             self.check_rules()
-
             time.sleep(30)
 
-
-
     def start_scheduler(self):
-
         thread = threading.Thread(
-
             target=self.scheduler,
-
             daemon=True
-
         )
-
         thread.start()
