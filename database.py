@@ -2,6 +2,7 @@ import sqlite3
 import os
 import uuid
 
+
 try:
     from werkzeug.security import generate_password_hash, check_password_hash  # type: ignore
 except ImportError:
@@ -51,6 +52,7 @@ class Database:
         os.makedirs(db_folder, exist_ok=True)
 
         self.db_path = os.path.join(db_folder, "smart_home.db")
+        self._conn = None
 
         self.init_db()
 
@@ -58,14 +60,14 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
+        self._conn = conn
         return conn
 
     def init_db(self):
         conn = self.connect()
         cursor = conn.cursor()
 
-        # ---------------- USERS ----------------
-
+        # USERS
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS users(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,8 +77,35 @@ class Database:
         )
         """)
 
-        # ---------------- DEVICES ----------------
+        # SETTINGS
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS settings(
+            user_id INTEGER PRIMARY KEY,
 
+            home_name TEXT DEFAULT 'My Smart Home',
+            timezone TEXT DEFAULT 'Asia/Kolkata',
+            language TEXT DEFAULT 'en',
+
+            voice_enabled INTEGER DEFAULT 1,
+            wake_word TEXT DEFAULT 'Hey AI',
+            voice_gender TEXT DEFAULT 'female',
+            voice_rate INTEGER DEFAULT 150,
+            voice_volume INTEGER DEFAULT 90,
+
+            automation_enabled INTEGER DEFAULT 1,
+            check_interval INTEGER DEFAULT 30,
+            max_rules INTEGER DEFAULT 50,
+
+            notifications INTEGER DEFAULT 1,
+            email_notifications INTEGER DEFAULT 1,
+            two_factor INTEGER DEFAULT 0,
+
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+        """)
+
+         # ---------------- DEVICES ----------------
+        
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS devices(
             id TEXT PRIMARY KEY,
@@ -86,18 +115,19 @@ class Database:
             status TEXT DEFAULT 'OFF'
         )
         """)
-
+               
+        
         # ---------------- ROOMS ----------------
-
+        
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS rooms(
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL
         )
         """)
-
-        # ---------------- AUTOMATION ----------------
-
+        
+                # ---------------- AUTOMATION ----------------
+        
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS automation_rules(
             id TEXT PRIMARY KEY,
@@ -107,9 +137,9 @@ class Database:
             enabled INTEGER DEFAULT 1
         )
         """)
-
-        # ---------------- SCHEDULES ----------------
-
+        
+                # ---------------- SCHEDULES ----------------
+        
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS schedules(
             id TEXT PRIMARY KEY,
@@ -118,20 +148,127 @@ class Database:
             schedule_time TEXT
         )
         """)
-
-        # ---------------- ENERGY ----------------
-
+        
+                # ---------------- ENERGY ----------------
+        
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS energy_logs(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             device_id TEXT,
             energy_usage REAL,
             log_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
+                )
         """)
 
         conn.commit()
         conn.close()
+
+        print("Database initialized")
+
+    #-------------------------------General Settings Table--------------------------------
+
+    def get_general_settings(self, user_id):
+
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT *
+        FROM settings
+        WHERE user_id=?
+        """,(user_id,))
+
+        row = cursor.fetchone()
+
+        conn.close()
+
+        if row:
+         return dict(row)
+
+        return {
+          }
+        
+    #--------------------------------General Settings Update--------------------------------
+
+    def update_general_settings(self, user_id, home_name, timezone, language):
+
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        UPDATE settings
+        SET home_name=?,
+            timezone=?,
+            language=?
+        WHERE user_id=?
+        """,
+       (
+        home_name,
+        timezone,
+        language,
+        user_id
+       ))
+ 
+        print("Rows updated:", cursor.rowcount)
+
+        conn.commit()
+        conn.close()
+
+
+
+
+
+
+        #-------------------------------Update Settings--------------------------------
+    def update_settings(self, user_id, home_name, timezone, language):
+
+        conn = self.connect()
+        try:
+            cursor = conn.cursor()
+        
+            cursor.execute("""
+            UPDATE settings
+            SET home_name=?,
+                timezone=?,
+                language=?
+            WHERE user_id=?
+            """,
+            (
+            home_name,
+            timezone,
+            language,
+            user_id
+            ))
+            
+            print("Rows updated:", cursor.rowcount)
+
+            conn.commit()
+        except Exception as e:
+            print("Update Settings Error:", e)
+        finally:
+            conn.close()
+       
+
+        #-----------------Default Settings----------------
+    def create_default_settings(self, user_id):
+
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        INSERT OR IGNORE INTO settings
+        (
+        user_id,
+        home_name,
+        timezone,
+        language
+        )
+        VALUES (?, 'My Smart Home', 'Asia/Kolkata', 'en')
+        """, (user_id,))
+
+        conn.commit()
+        conn.close()
+
 
     # ===================================================
     # USER METHODS
@@ -152,6 +289,10 @@ class Database:
             )
 
             conn.commit()
+
+            cursor.execute("SELECT id, username, email FROM users")
+            print("Users in database:", cursor.fetchall())
+
             print("User saved successfully")
             return True
 
@@ -196,7 +337,49 @@ class Database:
 
         return user
 
+    def get_user_by_id(self, user_id):
+
+     conn = self.connect()
+     cursor = conn.cursor()
+
+     cursor.execute(
+        "SELECT * FROM users WHERE id=?",
+        (user_id,)
+    )
+
+     user = cursor.fetchone()
+
+     conn.close()
+
+     return user
+
+    def update_profile(self, user_id, name, email):
+
+     conn = self.connect()
+     cursor = conn.cursor()
+
+     cursor.execute(
+        """
+        UPDATE users
+        SET username = ?,
+            email = ?
+        WHERE id = ?
+        """,
+        (
+            name,
+            email,
+            user_id
+        )
+     )
+
+     conn.commit()
+
+     print("Updated rows:", cursor.rowcount)
+
+     conn.close()
+
     def get_user(self, user_id):
+
         conn = self.connect()
         cursor = conn.cursor()
 
@@ -226,7 +409,55 @@ class Database:
         conn.close()
 
         return success
+    
+    
 
+    def get_settings(self, user_id):
+
+        conn = self.connect()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT home_name, timezone, language
+        FROM settings
+        WHERE user_id=?
+        """, (user_id,))
+
+
+        row = cursor.fetchone()
+
+        conn.close()
+
+        if row:
+         return {
+            "home_name": row["home_name"],
+            "timezone": row["timezone"],
+            "language": row["language"]
+        }
+
+        return {
+        "home_name": "My Smart Home",
+        "timezone": "Asia/Kolkata",
+        "language": "en"
+    }
+
+    def update_language(self, user_id, language):
+
+        conn = self.connect()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        UPDATE settings
+        SET language=?
+        WHERE user_id=?
+        """, (language, user_id))
+
+        conn.commit()
+        conn.close()
+
+
+   
     # ===================================================
     # DEVICE METHODS
     # ===================================================
@@ -604,4 +835,10 @@ class Database:
         conn.close()
 
     def close(self):
-        pass
+        if self._conn:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            finally:
+                self._conn = None

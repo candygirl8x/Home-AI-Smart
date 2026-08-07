@@ -1,6 +1,8 @@
 import threading
 import time
-
+import cv2
+import mediapipe as mp
+from hand_detection import HandDetector
 print("Loaded automation.py")
 
 
@@ -8,6 +10,58 @@ class AutomationManager:
 
     def __init__(self):
         print("Automation Manager Started")
+        self.hand_detector = HandDetector()
+        self.last_hand_state = None
+        # Hand Detection Setup
+        self.mp_hands = mp.solutions.hands
+        self.hands = self.mp_hands.Hands(
+            max_num_hands=1,
+            min_detection_confidence=0.7
+        )
+
+        self.mp_draw = mp.solutions.drawing_utils
+
+    def process_hand(self, frame):
+        frame, state = self.hand_detector.get_hand_state(frame)
+
+        # Only when gesture changes
+        if state != self.last_hand_state:
+            self.last_hand_state = state
+
+            if state == "OPEN":
+                print("OPEN Hand -> Light ON")
+                self.execute_action({
+                    "device": "Light",
+                    "status": "ON"
+                })
+
+            elif state == "CLOSED":
+                print("CLOSED Hand -> Light OFF")
+                self.execute_action({
+                    "device": "Light",
+                    "status": "OFF"
+                })
+
+        return frame, state
+
+    def detect_hand(self, frame):
+        rgb_frame = cv2.cvtColor(
+            frame,
+            cv2.COLOR_BGR2RGB
+        )
+
+        result = self.hands.process(rgb_frame)
+
+        if result.multi_hand_landmarks:
+            for hand_landmarks in result.multi_hand_landmarks:
+                self.mp_draw.draw_landmarks(
+                    frame,
+                    hand_landmarks,
+                    self.mp_hands.HAND_CONNECTIONS
+                )
+            return True
+
+        return False    
 
     # =========================
     # Execute Actions
@@ -15,10 +69,14 @@ class AutomationManager:
 
     def execute_action(self, action):
 
+        print("ACTION RECEIVED:", action)
         if action is None:
             return
 
         print("Executing Action:", action)
+        if isinstance(action, dict) and action.get("source") == "hand":
+           print("Hand Gesture Action")
+
 
         if isinstance(action, dict):
 

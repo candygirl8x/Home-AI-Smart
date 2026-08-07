@@ -11,7 +11,7 @@ from flask import (
     flash
 )
 import flask
-
+from translations import get_translation, translations
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import traceback
@@ -38,6 +38,28 @@ app = Flask(__name__)
 print("Template folder:", app.template_folder)
 print("Root path:", app.root_path)
 app.secret_key = "your-secret-key-here"
+
+@app.context_processor
+def inject_translations():
+
+    language = "en"
+
+    if "user_id" in session:
+
+        try:
+            settings = db.get_settings(session["user_id"])
+
+            if settings:
+                language = settings.get("language", "en")
+
+        except Exception as e:
+            print("Translation error:", e)
+            language = "en"
+
+
+    return {
+        "t": get_translation(language)
+    }
 
 # ===========================
 # Gmail Configuration
@@ -641,6 +663,197 @@ def resend_otp():
     flash("A new OTP has been sent.","success")
 
     return redirect(url_for("verify_otp"))
+
+@app.route("/profile", methods=["GET", "POST"])
+def profile():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user = db.get_user(session["user_id"])
+
+    if request.method == "POST":
+
+        name = request.form["name"]
+        email = request.form["email"]
+
+        print("User ID:", session["user_id"])
+        print("New Name:", name)
+        print("New Email:", email)
+
+        db.update_profile(
+            session["user_id"],
+            name,
+            email
+        )
+
+        flash("Profile updated successfully.", "success")
+        return redirect(url_for("profile"))
+
+    return render_template("profile.html", user=user)
+
+@app.route("/settings")
+def settings():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user = db.get_user(session["user_id"])
+
+    #db.create_default_settings(session["user_id"])
+
+    settings = db.get_settings(session["user_id"])
+    print("Settings from DB:", settings)
+    
+    
+
+    voice_settings = {
+        "enabled": True,
+        "wake_word": "Hey AI",
+        "voice_gender": "female",
+        "voice_rate": 150,
+        "voice_volume": 90
+    }
+
+    automation_settings = {
+        "enabled": True,
+        "check_interval": 30,
+        "max_rules": 50
+    }
+
+    security_settings = {
+        "two_factor": False
+    }
+
+    devices = db.get_devices()
+
+    rooms = [
+        {"name": "Living Room"},
+        {"name": "Bedroom"},
+        {"name": "Kitchen"}
+    ]
+
+    rules = []
+
+    print("Settings being sent to template:", settings)
+    return render_template(
+        "settings.html",
+        user=user,
+        settings=settings,
+        
+        voice_settings=voice_settings,
+        automation_settings=automation_settings,
+        security_settings=security_settings,
+        devices=devices,
+        rooms=rooms,
+        rules=rules
+    )
+
+@app.route("/save_settings", methods=["POST"])
+def save_settings():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    # Get form data
+    home_name = request.form.get("home_name")
+    timezone = request.form.get("timezone")
+    language = request.form.get("language")
+
+
+    # Update settings in database
+    db.update_settings(
+        session["user_id"],
+        
+        home_name,
+        timezone,
+        language
+    )
+
+
+    flash("Settings saved successfully", "success")
+
+    return redirect(url_for("settings"))
+
+@app.route("/update_security_settings", methods=["POST"])
+def update_security_settings():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    current_password = request.form["current_password"]
+    new_password = request.form["new_password"]
+    confirm_password = request.form["confirm_password"]
+
+    if new_password != confirm_password:
+        flash("Passwords do not match.", "danger")
+        return redirect(url_for("settings"))
+
+    user = db.get_user(session["user_id"])
+
+    if not check_password_hash(user["password"], current_password):
+        flash("Current password is incorrect.", "danger")
+        return redirect(url_for("settings"))
+
+    db.update_password(session["email"], new_password)
+
+    flash("Password updated successfully.", "success")
+    return redirect(url_for("settings"))
+
+@app.route("/update_voice_settings", methods=["POST"])
+def update_voice_settings():
+    flash("Voice settings updated successfully.", "success")
+    return redirect(url_for("settings"))
+
+
+@app.route("/update_automation_settings", methods=["POST"])
+def update_automation_settings():
+    flash("Automation settings updated successfully.", "success")
+    return redirect(url_for("settings"))
+
+
+@app.route("/update_general_settings", methods=["POST"])
+def update_general_settings():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    home_name = request.form["home_name"]
+    timezone = request.form["timezone"]
+    language = request.form["language"]
+
+    print("User ID:", session["user_id"])
+    print("Home Name:", home_name)
+    print("Timezone:", timezone)
+    print("Language:", language)
+
+
+    db.update_general_settings(
+        session["user_id"],
+        home_name,
+        timezone,
+        language
+    )
+
+    flash("General settings updated successfully.", "success")
+    return redirect(url_for("settings"))
+
+
+@app.route("/scenes")
+def scenes():
+    return "<h2>Scenes Page - Coming Soon</h2>"
+
+
+@app.route("/schedule")
+def schedule():
+    return "<h2>Schedule Page - Coming Soon</h2>"
+
+
+@app.route("/help")
+def help():
+    return "<h2>Help Page - Coming Soon</h2>"
 
 if __name__ == "__main__":
     print("Starting Flask Server...")

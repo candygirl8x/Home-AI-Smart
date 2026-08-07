@@ -2,13 +2,17 @@
 <html>
 
 <head>
-    <title>Smart Home AI Dashboard</title>
+    <title>{{t.dashboard}}</title>
 
     <style>
         body {
             font-family: Arial;
             background: #f4f4f4;
             padding: 20px;
+        }
+
+        h1 {
+            color: #333;
         }
 
         .card {
@@ -19,11 +23,28 @@
             display: inline-block;
             width: 200px;
             box-shadow: 0px 0px 10px gray;
+            vertical-align: top;
         }
 
         button {
             padding: 10px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .logout {
+            background: #dc3545;
+        }
+
+        .logout:hover {
+            background: #a71d2a;
         }
     </style>
 
@@ -33,10 +54,34 @@
 <body>
 
 
-    <h1>Smart Home AI Dashboard</h1>
+    <h1>{{t.dashboard}}</h1>
 
-    <h2>Welcome {{ username }}</h2>
+    <h2>{{t.welcome}} {{ username }}</h2>
 
+
+
+    <!-- Profile Card -->
+
+    <div class="card">
+
+        <h3>My Profile</h3>
+
+        <p>View and update your profile details</p>
+
+
+        <a href="/profile">
+
+            <button>
+                Open Profile
+            </button>
+
+        </a>
+
+    </div>
+
+
+
+    <!-- Devices Card -->
 
     <div class="card">
 
@@ -44,15 +89,21 @@
 
         <p>Control your smart devices</p>
 
+
         <a href="/devices">
+
             <button>
                 View Devices
             </button>
+
         </a>
 
     </div>
 
 
+
+
+    <!-- Automation Card -->
 
     <div class="card">
 
@@ -60,15 +111,35 @@
 
         <p>Create smart rules</p>
 
+
         <a href="/automation">
+
             <button>
                 Manage Rules
             </button>
+
         </a>
 
     </div>
 
 
+    <!-- Settings Card -->
+
+    <div class="card">
+
+        <h3>Settings</h3>
+
+        <p>Manage your account settings</p>
+
+        <a href="/settings">
+            <button>
+                Open Settings
+            </button>
+        </a>
+
+    </div>
+
+    <!-- Energy Card -->
 
     <div class="card">
 
@@ -76,22 +147,33 @@
 
         <p>Monitor electricity usage</p>
 
+
         <a href="/energy">
+
             <button>
                 View Energy
             </button>
+
         </a>
+
     </div>
+
 
 
 
     <br><br>
 
+
     <a href="/logout">
-        <button>
+
+        <button class="logout">
+
             Logout
+
         </button>
+
     </a>
+
 
 
 </body>
